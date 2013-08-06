@@ -16,7 +16,7 @@ Tkx::option_add("*tearOff", 0);
 my $mw = Tkx::widget->new(".");
 $mw->g_wm_title("shse");
 my $content = $mw->new_ttk__frame;
-my $frame = $content->new_ttk__frame(-width => 550, -height => 360);
+my $frame = $content->new_ttk__frame(-width => 550, -height => 345);
 
 #Menu
 #Toplevel
@@ -47,10 +47,36 @@ $helpmenu->add_command(-label => "Documentation", -command => sub {documentation
 $helpmenu->add_separator;
 $helpmenu->add_command(-label => "About", -command => sub {about_help()});
 
+#Textbox
+my $text = $frame->new_tk__text();
+#Scrollbar
+my $verticalscrollbar = $frame->new_ttk__scrollbar(-orient => 'vertical', -command => [$text, 'yview']);
+$text->configure(-yscrollcommand => [$verticalscrollbar, 'set']);
+my $horizontalscrollbar = $frame->new_ttk__scrollbar(-orient => 'horizontal', -command => [$text, 'xview']);
+$text->configure(-xscrollcommand => [$horizontalscrollbar, 'set']);
+#Statusbar
+my $linenum;
+my $colnum;
+my $statusbar = $content->new_ttk__frame(-width => 550, -height => 15);
+my $statusbarlinetext = $statusbar->new_ttk__label(-text => "Line ");
+my $statusbarlinevar = $statusbar->new_ttk__label(-textvariable => \$linenum);
+my $statusbarcoltext = $statusbar->new_ttk__label(-text => ", Column ");
+my $statusbarcolvar = $statusbar->new_ttk__label(-textvariable => \$colnum);
+
 #Element layout.
 $mw->configure(-menu => $menu);
-$content->g_grid(-column => 0, -row => 0);
-$frame->g_grid(-column => 0, -row => 0);
+$content->g_grid(-column => 0, -row => 0, -sticky => "nesw");
+$frame->g_grid(-column => 0, -row => 0, -sticky => "nesw");
+$text->g_grid(-column=> 0, -row => 0, -sticky => "nesw");
+$verticalscrollbar->g_grid(-column => 1, -row => 0, -sticky => "ns");
+$horizontalscrollbar->g_grid(-column => 0, -row => 1, -sticky => "we");
+$statusbar->g_grid(-column => 0, -row => 2, -sticky => "we");
+$statusbarlinetext->g_grid(-column => 0, -row => 2, -sticky => "w");
+$statusbarlinevar->g_grid(-column => 0, -row => 2, -sticky => "w");
+$statusbarcoltext->g_grid(-column => 0, -row => 2, -sticky => "w");
+$statusbarcolvar->g_grid(-column => 0, -row => 2, -sticky => "w");
+
+$mw->new_ttk__sizegrip->g_grid(-column => 0, -row => 0, -sticky => "se");
 
 #Blast off.
 Tkx::MainLoop();
