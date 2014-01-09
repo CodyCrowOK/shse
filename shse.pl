@@ -2,7 +2,9 @@
 
 use strict;
 use warnings;
+use 5.14.0;
 use Tkx;
+use IO qw(File);
 
 #Let's just get this out of the way.
 #Keep menus from tearing away.
@@ -11,12 +13,27 @@ Tkx::option_add("*tearOff", 0);
 #OOP does not solve modularity problems.
 #Or gratuitous code commenting.
 
+#Let's do some basic file-info hashref fun.
+our %newfile = (
+	'filename' 	=> 'UNTITLED',
+	'contents'	=> '',
+	'lang'		=> '',
+	'encoding'	=> 'utf-8',
+);
+#Initialize the current state to a new file.
+say "Initializing internal hashref to a new file.";
+our $current = \%newfile;
+
+
 #Elements
 #Container
+my $framewidth = 550;
+my $frameheight = 345;
 my $mw = Tkx::widget->new(".");
-$mw->g_wm_title("shse");
+$mw->g_wm_title($current->{filename} . " - shse");
+$mw->g_wm_minsize($framewidth, $frameheight);
 my $content = $mw->new_ttk__frame;
-my $frame = $content->new_ttk__frame(-width => 550, -height => 345);
+my $frame = $content->new_ttk__frame();
 
 #Menu
 #Toplevel
@@ -77,6 +94,63 @@ $statusbarcoltext->g_grid(-column => 0, -row => 2, -sticky => "w");
 $statusbarcolvar->g_grid(-column => 0, -row => 2, -sticky => "w");
 
 $mw->new_ttk__sizegrip->g_grid(-column => 0, -row => 0, -sticky => "se");
+
+sub update_current {
+	say "Updating \$current hashref.";
+	$current->{contents} = $text->get("1.0", "end");
+	#Everything else should be updated by other subs,
+	#because modularity is for people who can't keep
+	#an arbitrarily large number of layers in their heads.
+}
+
+sub save {
+	###Requires that all relevant details be resolved before being called,
+	###Except for the contents of the text field.
+	#Obviously save the current open file to disk.
+	#Create instance of whatever file.
+	say "Update internal hashref.";
+	&update_current;
+	if ($current->{filename} eq "UNTITLED") { goto-&save_as_file; } #Goto for President
+	say "Attempting to save.";
+	open(my $fh, ">", $current->{filename}) or warn "Couldn't open for saving: $!";
+	say "Opened for saving.";
+	print $fh $current->{contents};
+	say "Contents written to file.";
+	close($fh) or warn "Couldn't close file: $!";
+	say "File saved.";
+}
+
+sub confirm_save {
+	#TODO: Prompt.
+	&save;
+}
+
+sub exit_file {
+	#TODO: Put a save confirmation alert up.
+	$mw->g_destroy;
+}
+
+sub save_file {
+	&save;
+}
+
+sub save_as_file {
+	$current->{filename} = Tkx::tk___getSaveFile();
+	&save;
+}
+
+sub new_file {
+	&confirm_save;
+	$current = \%newfile;
+	$text->delete('1.0', 'end'); #clear the way
+	$text->insert('1.0', $current->{contents});
+	$mw->g_wm_title($current->{filename} . " - shse");
+	
+}
+
+sub CATCHALL_ERRORS_LOL {
+	
+}
 
 #Blast off.
 Tkx::MainLoop();
