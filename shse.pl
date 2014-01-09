@@ -20,9 +20,15 @@ our %newfile = (
 	'lang'		=> '',
 	'encoding'	=> 'utf-8',
 );
+our %realfile = (
+	'filename' 	=> 'UNTITLED',
+	'contents'	=> '',
+	'lang'		=> '',
+	'encoding'	=> 'utf-8',
+);
 #Initialize the current state to a new file.
 say "Initializing internal hashref to a new file.";
-our $current = \%newfile;
+our $current = \%realfile;
 
 
 #Elements
@@ -65,7 +71,7 @@ $helpmenu->add_separator;
 $helpmenu->add_command(-label => "About", -command => sub {about_help()});
 
 #Textbox
-my $text = $frame->new_tk__text();
+my $text = $frame->new_tk__text(-wrap => "none");
 #Scrollbar
 my $verticalscrollbar = $frame->new_ttk__scrollbar(-orient => 'vertical', -command => [$text, 'yview']);
 $text->configure(-yscrollcommand => [$verticalscrollbar, 'set']);
@@ -95,12 +101,18 @@ $statusbarcolvar->g_grid(-column => 0, -row => 2, -sticky => "w");
 
 $mw->new_ttk__sizegrip->g_grid(-column => 0, -row => 0, -sticky => "se");
 
-sub update_current {
+
+sub update_current { #Updates the hashref
 	say "Updating \$current hashref.";
 	$current->{contents} = $text->get("1.0", "end");
 	#Everything else should be updated by other subs,
 	#because modularity is for people who can't keep
 	#an arbitrarily large number of layers in their heads.
+}
+
+sub update_actual { #Updates the text field.
+	$text->delete('1.0', 'end'); #clear the way
+	$text->insert('1.0', $current->{contents});
 }
 
 sub save {
@@ -110,9 +122,9 @@ sub save {
 	#Create instance of whatever file.
 	say "Update internal hashref.";
 	&update_current;
-	if ($current->{filename} eq "UNTITLED") { goto-&save_as_file; } #Goto for President
+	if ($current->{filename} eq "UNTITLED") { $current->{filename} = Tkx::tk___getSaveFile() or return say "User cancelled save."; }
 	say "Attempting to save.";
-	open(my $fh, ">", $current->{filename}) or warn "Couldn't open for saving: $!";
+	open(my $fh, ">", $current->{filename}) or return say "Couldn't open for saving: $!";
 	say "Opened for saving.";
 	print $fh $current->{contents};
 	say "Contents written to file.";
@@ -121,8 +133,13 @@ sub save {
 }
 
 sub confirm_save {
-	#TODO: Prompt.
-	&save;
+	my $confirm = Tkx::tk___messageBox(-type => "yesno",
+	    -message => "Would you like to save the current file?",
+	    -icon => "question", -title => "Confirm");
+	given ($confirm) {
+		when ("yes") { &save; }
+		when ("no") { say "User chose not to save the file. Their loss."; }
+	}
 }
 
 sub exit_file {
@@ -135,20 +152,27 @@ sub save_file {
 }
 
 sub save_as_file {
-	$current->{filename} = Tkx::tk___getSaveFile();
+	$current->{filename} = Tkx::tk___getSaveFile() or return say "User cancelled save.";
 	&save;
+}
+
+sub open_file {
+	$current->{filename} = Tkx::tk___getOpenFile();
+	open(my $fh, "<", $current->{filename}) or warn "Couldn't open for reading: $!";
+	local $/=undef; #Perl voodoo courtesy of File::Slurp's Uri.
+	my $file = <$fh>;
+	close $fh;
+	$current->{contents} = $file;
+	&update_actual;
+	$mw->g_wm_title($current->{filename} . " - shse");
 }
 
 sub new_file {
 	&confirm_save;
-	$current = \%newfile;
+	%realfile = %newfile;
 	$text->delete('1.0', 'end'); #clear the way
 	$text->insert('1.0', $current->{contents});
 	$mw->g_wm_title($current->{filename} . " - shse");
-	
-}
-
-sub CATCHALL_ERRORS_LOL {
 	
 }
 
