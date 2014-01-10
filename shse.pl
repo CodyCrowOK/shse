@@ -105,6 +105,7 @@ $mw->new_ttk__sizegrip->g_grid(-column => 0, -row => 0, -sticky => "se");
 sub update_current { #Updates the hashref
 	say "Updating \$current hashref.";
 	$current->{contents} = $text->get("1.0", "end");
+	$mw->g_wm_title($current->{filename} . " - shse");
 	#Everything else should be updated by other subs,
 	#because modularity is for people who can't keep
 	#an arbitrarily large number of layers in their heads.
@@ -154,6 +155,7 @@ sub save_file {
 sub save_as_file {
 	$current->{filename} = Tkx::tk___getSaveFile() or return say "User cancelled save.";
 	&save;
+&update_current;
 }
 
 sub open_file {
@@ -164,7 +166,7 @@ sub open_file {
 	close $fh;
 	$current->{contents} = $file;
 	&update_actual;
-	$mw->g_wm_title($current->{filename} . " - shse");
+&update_current;
 }
 
 sub new_file {
@@ -172,7 +174,7 @@ sub new_file {
 	%realfile = %newfile;
 	$text->delete('1.0', 'end'); #clear the way
 	$text->insert('1.0', $current->{contents});
-	$mw->g_wm_title($current->{filename} . " - shse");
+&update_current;
 	
 }
 
