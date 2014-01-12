@@ -80,31 +80,49 @@ my $text = $frame->new_tk__text(-wrap => "none");
 #Scrollbar
 my $verticalscrollbar = $frame->new_ttk__scrollbar(-orient => 'vertical', -command => [$text, 'yview']);
 $text->configure(-yscrollcommand => [$verticalscrollbar, 'set']);
-my $horizontalscrollbar = $frame->new_ttk__scrollbar(-orient => 'horizontal', -command => [$text, 'xview']);
+my $horizontalscrollbar = $content->new_ttk__scrollbar(-orient => 'horizontal', -command => [$text, 'xview']);
 $text->configure(-xscrollcommand => [$horizontalscrollbar, 'set']);
 #Statusbar
-my $linenum;
-my $colnum;
+my $linenum = 7;
+my $colnum = 10; #Dummy values
 my $statusbar = $content->new_ttk__frame(-width => $preferences->{windowwidth}, -height => 15);
 my $statusbarlinetext = $statusbar->new_ttk__label(-text => "Line ");
 my $statusbarlinevar = $statusbar->new_ttk__label(-textvariable => \$linenum);
 my $statusbarcoltext = $statusbar->new_ttk__label(-text => ", Column ");
 my $statusbarcolvar = $statusbar->new_ttk__label(-textvariable => \$colnum);
 
-#Element layout.
-$mw->configure(-menu => $menu);
-$content->g_grid(-column => 0, -row => 0, -sticky => "nesw");
-$frame->g_grid(-column => 0, -row => 0, -sticky => "nesw");
-$text->g_grid(-column=> 0, -row => 0, -sticky => "nesw");
-$verticalscrollbar->g_grid(-column => 1, -row => 0, -sticky => "ns");
-$horizontalscrollbar->g_grid(-column => 0, -row => 1, -sticky => "we");
-$statusbar->g_grid(-column => 0, -row => 2, -sticky => "we");
-$statusbarlinetext->g_grid(-column => 0, -row => 2, -sticky => "w");
-$statusbarlinevar->g_grid(-column => 0, -row => 2, -sticky => "w");
-$statusbarcoltext->g_grid(-column => 0, -row => 2, -sticky => "w");
-$statusbarcolvar->g_grid(-column => 0, -row => 2, -sticky => "w");
-$mw->new_ttk__sizegrip->g_grid(-column => 0, -row => 0, -sticky => "se");
+##The next 32 lines are an atrocity.
 
+#Element layout.
+#$mw->configure(-menu => $menu);
+#$content->g_grid(-column => 0, -row => 0, -sticky => "nesw");
+#$frame->g_grid(-column => 0, -row => 0, -sticky => "nesw");
+#$text->g_grid(-column=> 0, -row => 0, -sticky => "nesw");
+#$verticalscrollbar->g_grid(-column => 1, -row => 0, -sticky => "ns");
+#$horizontalscrollbar->g_grid(-column => 0, -row => 1, -sticky => "we");
+#$statusbar->g_grid(-column => 0, -row => 2, -sticky => "we");
+#$statusbarlinetext->g_grid(-column => 0, -row => 2, -sticky => "w");
+#$statusbarlinevar->g_grid(-column => 0, -row => 2, -sticky => "w");
+#$statusbarcoltext->g_grid(-column => 0, -row => 2, -sticky => "w");
+#$statusbarcolvar->g_grid(-column => 0, -row => 2, -sticky => "w");
+#$mw->new_ttk__sizegrip->g_grid(-column => 0, -row => 0, -sticky => "se");
+
+#Pack it up, pack it in.
+$mw->configure(-menu => $menu);
+$content->g_pack(-expand => 1, -fill => "both");
+$frame->g_pack(-expand => 1, -fill => "both");
+$text->g_pack(-in => $frame, -expand => 1, -fill => "both", -side => "left");
+$verticalscrollbar->g_pack(-in => $frame, -side => "right", -expand => 0, -fill => "y", -anchor => "e");
+$horizontalscrollbar->g_pack(-in => $content, -expand => 0, -side => "top", -fill => "x");
+$statusbar->g_pack(-expand => 0, -fill => "x");
+$statusbarlinetext->g_grid(-column => 0, -row => 2, -sticky => "w");
+$statusbarlinevar->g_grid(-column => 1, -row => 2, -sticky => "w");
+$statusbarcoltext->g_grid(-column => 2, -row => 2, -sticky => "w");
+$statusbarcolvar->g_grid(-column => 3, -row => 2, -sticky => "w");
+#$statusbarlinetext->g_pack(-in => $statusbar, -anchor => "w",);
+#$statusbarlinevar->g_pack(-in => $statusbar, -anchor => "w", -after => $statusbarlinetext);
+#$statusbarcoltext->g_pack(-in => $statusbar, -anchor => "w", -after => $statusbarlinevar);
+#$verticalscrollbar->g_pack(-in => $frame, -expand => 0, -fill => "y", -anchor => "e");
 
 #Relevant original subroutines.
 
