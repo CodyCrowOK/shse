@@ -30,11 +30,16 @@ our %realfile = (
 say "Initializing internal hashref to a new file.";
 our $current = \%realfile;
 
+#Let's try to get user preferences ironed out in an easily-fixable way.
+our $preferences = {
+	'windowheight' 	=> '550',
+	'windowwidth' 	=> '345',
+};
 
 #Elements
 #Container
-my $framewidth = 550;
-my $frameheight = 345;
+my $framewidth = $preferences->{windowheight};
+my $frameheight = $preferences->{windowwidth};
 my $mw = Tkx::widget->new(".");
 $mw->g_wm_title($current->{filename} . " - shse");
 $mw->g_wm_minsize($framewidth, $frameheight);
@@ -80,7 +85,7 @@ $text->configure(-xscrollcommand => [$horizontalscrollbar, 'set']);
 #Statusbar
 my $linenum;
 my $colnum;
-my $statusbar = $content->new_ttk__frame(-width => 550, -height => 15);
+my $statusbar = $content->new_ttk__frame(-width => $preferences->{windowwidth}, -height => 15);
 my $statusbarlinetext = $statusbar->new_ttk__label(-text => "Line ");
 my $statusbarlinevar = $statusbar->new_ttk__label(-textvariable => \$linenum);
 my $statusbarcoltext = $statusbar->new_ttk__label(-text => ", Column ");
@@ -98,8 +103,26 @@ $statusbarlinetext->g_grid(-column => 0, -row => 2, -sticky => "w");
 $statusbarlinevar->g_grid(-column => 0, -row => 2, -sticky => "w");
 $statusbarcoltext->g_grid(-column => 0, -row => 2, -sticky => "w");
 $statusbarcolvar->g_grid(-column => 0, -row => 2, -sticky => "w");
-
 $mw->new_ttk__sizegrip->g_grid(-column => 0, -row => 0, -sticky => "se");
+
+
+#Relevant original subroutines.
+
+sub detect_filetype {
+	$_ = $current->{filename};
+	my $rev = scalar reverse;
+	#Just looking for Perl for now.
+	my @arr = split(/\./, $rev);
+	$arr[0] = scalar reverse $arr[0];
+	if ($arr[0] eq "pm" || $arr[0] eq "pl") { $current->{lang} = "perl"; }
+	
+	if ($current->{lang}) {
+		say $current->{lang};
+	} else {
+		say "There is no language to be assumed.";
+	}
+}
+
 
 
 sub update_current { #Updates the hashref
@@ -109,6 +132,7 @@ sub update_current { #Updates the hashref
 	#Everything else should be updated by other subs,
 	#because modularity is for people who can't keep
 	#an arbitrarily large number of layers in their heads.
+	&detect_filetype;
 }
 
 sub update_actual { #Updates the text field.
@@ -155,18 +179,18 @@ sub save_file {
 sub save_as_file {
 	$current->{filename} = Tkx::tk___getSaveFile() or return say "User cancelled save.";
 	&save;
-&update_current;
+	&update_current;
 }
 
 sub open_file {
 	$current->{filename} = Tkx::tk___getOpenFile();
 	open(my $fh, "<", $current->{filename}) or warn "Couldn't open for reading: $!";
-	local $/=undef; #Perl voodoo courtesy of File::Slurp's Uri.
+	local $/=undef; 
 	my $file = <$fh>;
 	close $fh;
 	$current->{contents} = $file;
 	&update_actual;
-&update_current;
+	&update_current;
 }
 
 sub new_file {
@@ -174,7 +198,7 @@ sub new_file {
 	%realfile = %newfile;
 	$text->delete('1.0', 'end'); #clear the way
 	$text->insert('1.0', $current->{contents});
-&update_current;
+	&update_current;
 	
 }
 
